@@ -7,18 +7,20 @@ require('dotenv').config();
 //Organiza os testes em um bloco
 describe("Teste de Integração - Secretaria Frotas", () => {
     const BASE_URL = process.env.API_BASE_URL;
-    const API_USER = process.env.API_USER;
+    const API_USER_ADMIN = process.env.API_USER_ADMIN;
     const API_USER_MOTORISTA = process.env.API_USER_MOTORISTA;
     const API_PASS = process.env.API_PASS;
     const req = request(BASE_URL);
     let token;
     let secretariaId;
+    let secretariaNome;
+    let secretariaSigla;
 //Caso de teste
     test("Deve Autenticar na API - Usando o ADMIN", async () => {
         const dados = await req
         .post('/login')
         .send({
-            credencial:API_USER,
+            credencial:API_USER_ADMIN,
             senha:API_PASS
         })
         .set('Accept','application/json');
@@ -77,9 +79,37 @@ describe("Teste de Integração - Secretaria Frotas", () => {
         expect(201);
         expect(resposta.status).toBe(201);
         expect(resposta.body.data.nome).toBe(novaSecretaria.nome);
+        secretariaId = resposta.body.data._id;
+        secretariaNome =resposta.body.data.nome;
+        secretariaSigla =resposta.body.data.sigla;
        
     });
 
+    test("Deve retornar uma mensagem de erro ao tentar cadastrar uma secretaria com nome já existente", async () => {
+        const secretariaExistente = {
+            nome: "SECRETARIA TESTE"+ " "+numeroAleatorio,
+        sigla: "SECRETARIA TESTE"+" "+numeroAleatorio,
+        responsavel: "Virgínia Melo",
+        telefone: "6999999999",
+        email: faker.internet.email(),
+        endereco: {
+            logradouro: "Rua Luiz Inácio da Silva",
+            numero: "4023",
+            bairro: "União",
+            cidade: "Cerejeiras",
+            estado: "RO",
+            cep: "40723697"
+    }
+        }
+        const resposta = await req 
+        .post(`/secretarias`)
+        .send(secretariaExistente)
+        .set("Authorization",`Bearer ${token}`);
+        expect(resposta.status).toBe(400);
+        console.log(resposta.body);
+    });
+
+    
 
 
 
